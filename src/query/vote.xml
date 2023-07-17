@@ -1,0 +1,405 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="vote">
+    <!-- 봇 투표 목록 -->
+    <select id="list"> 
+        SELECT
+            v.name,
+            is_started,
+            vv.value
+        FROM
+            vote v
+        LEFT JOIN
+            vote_values vv
+        ON
+            v.id = vv.vote_id
+            AND vv.is_deleted != 1
+        WHERE
+            v.is_deleted != 1
+            AND v.channel = #{channel}
+        ORDER BY
+            v.name
+    </select>
+
+    <!-- 중복 체크 -->
+    <select id="dupvote">
+    SELECT 
+        channel,
+        name
+    FROM
+        vote
+    WHERE
+        is_deleted = 0
+        AND channel = #{channel} 
+        AND name = #{name}
+    </select>
+    <select id="dupvalue">
+    SELECT 
+        vv.vote_id,
+        vv.value
+    FROM
+        vote_values vv
+    JOIN
+        vote v
+    ON
+        vv.vote_id = v.id
+        AND v.is_deleted = 0
+    WHERE
+        vv.is_deleted = 0
+        AND vv.vote_id = #{vote_id}
+        AND vv.value = #{value}
+    </select>
+
+    <!-- 투표가 시작했는지 -->
+    <select id="is_started">
+        SELECT
+            *
+        FROM
+            vote
+        WHERE
+            name = #{name}
+            AND channel = #{channel}
+            AND is_deleted != 1
+    </select>
+
+    <!-- 봇 투표 생성 -->
+    <insert id="new">
+        INSERT INTO
+            vote
+        (
+            name,
+            channel
+        )
+        VALUES
+        (
+            #{name},
+            #{channel}
+        )
+    </insert>
+
+    <!-- 봇 투표 추가 -->
+    <insert id="insert">
+        INSERT INTO
+            vote_values
+        (
+            vote_id,
+            value
+        )
+        VALUES
+        (
+            #{vote_id},
+            #{value}
+        )
+    </insert>
+
+    <!-- 봇 투표 삭제 -->
+    <delete id="delete_vote">
+        UPDATE
+            vote
+        SET
+            is_deleted = 1
+        WHERE
+            name = #{name}
+            AND channel = #{channel}
+            AND is_deleted != 1
+    </delete>
+
+    <!-- 봇 투표 삭제 (후보 삭제) -->
+    <update id="delete_value">
+        UPDATE
+            vote_values
+        SET
+            is_deleted = 1
+        WHERE
+            vote_id = #{vote_id}
+            AND value = #{value}
+            AND is_deleted != 1
+    </delete>
+
+    <!-- 봇 투표 시작 -->
+    <update id="start">
+        SELECT
+            v.name,
+            vv.id,
+            vv.value
+        FROM
+            vote v
+        JOIN
+            vote_values vv
+        ON
+            v.id = vv.vote_id
+            AND vv.is_deleted != 1
+        WHERE
+            v.name = #{name}
+            AND v.channel = #{channel}
+            AND v.is_deleted != 1;
+        UPDATE
+            vote 
+        SET
+            is_started = 1
+        WHERE
+            name = #{name}
+            AND channel = #{channel}
+            AND is_deleted != 1;
+    </update>
+
+    <!-- 특정 투표 정보 가져오기 -->
+    <select id="get">
+        SELECT
+            v.name,
+            v.id,
+            v.is_started,
+            v.is_deleted,
+            COUNT(vv.value) cnt
+        FROM 
+            vote v
+        LEFT JOIN
+            vote_values vv
+        ON
+            v.id = vv.vote_id
+        WHERE
+            v.name = #{name}
+            AND v.channel = #{channel}
+        GROUP BY
+            v.name
+    </select>
+
+    <!-- 후보 정보 가져오기 -->
+    <select id="getvalue">
+        SELECT
+            v.*,
+            vv.id value_id
+        FROM
+            vote v 
+        LEFT JOIN
+            vote_values vv
+        ON
+            v.id = vv.vote_id
+            AND vv.is_deleted != 1
+        WHERE
+            v.name = #{name}
+            AND v.is_deleted != 1
+    </select>
+
+    <!-- 투표하기 -->
+    <insert id="vote">
+        INSERT INTO
+            vote_users
+        VALUES(
+            #{log_id},
+            #{user_id},
+            #{vote_id},
+            #{value_id}
+        )
+    </insert>
+
+    <select id="get_log_id">
+    SELECT
+        id
+    FROM
+        vote_log
+    WHERE
+        channel = #{channel}
+        AND ts = #{ts}
+        AND vote_id = #{vote_id}
+    </select>
+
+    <select id="get_vote_id">
+    SELECT
+        id
+    FROM
+        vote
+    WHERE
+        name = #{name}
+        <if test="is_deleted != ''">
+        AND is_deleted != 1
+        </if>
+    </select>
+
+    <!-- 투표 참여 체크 -->
+    <select id="check">
+        SELECT
+            v.name,
+            v.is_started,
+            users.user_id
+        FROM
+            vote v
+        LEFT JOIN
+            vote_users users
+        ON
+            users.vote_id = v.id
+        JOIN
+            vote_log log
+        ON
+            users.log_id = log.id
+            AND log.vote_id = v.id
+        WHERE 
+            v.name = #{name}
+            AND log.ts = #{ts}
+            AND users.user_id = #{user_id}
+            AND v.is_started = 1
+    </select>
+
+    <!-- 투표 참여자 -->
+    <select id="users">
+        SELECT
+            v.name,
+            users.user_id
+        FROM
+            vote_users users
+        JOIN
+            vote_log log
+        ON
+            users.vote_id = log.vote_id
+            AND users.log_id = log.id
+        JOIN
+            vote v 
+        ON
+            users.vote_id = v.id
+            AND log.channel = v.channel
+        WHERE 
+            users.vote_id = #{vote_id}
+            AND v.name = #{name}
+            AND log.ts = #{ts}
+            AND log.channel = #{channel}
+    </select>
+
+    <!-- 봇 투표 마감 -->
+    <select id="end">
+    <!-- 결과 리스트 -->
+        SELECT 
+	        v.name,
+	        vv.value,
+	        IFNULL(cnt.count, 0) count
+        FROM
+	        vote v
+        JOIN
+            vote_values vv
+        ON 
+            v.id = vv.vote_id
+        LEFT JOIN
+        (
+            SELECT
+                vv.value,
+                COUNT(users.user_id) count
+            FROM
+                vote v
+            LEFT JOIN
+                vote_values vv
+            ON
+                vv.vote_id = v.id
+                AND vv.is_deleted != 1
+            LEFT JOIN
+                vote_users users
+            ON
+                users.value_id = vv.id
+                AND users.vote_id = v.id
+            LEFT JOIN 
+                vote_log log
+            ON
+                users.log_id = log.id 
+                AND log.channel = v.channel
+            WHERE
+                v.name = #{name}
+                AND log.ts = #{ts}
+                AND log.channel = #{channel}
+            GROUP BY
+                users.vote_id,
+                users.value_id
+            ORDER BY
+                count DESC, vv.value
+        ) cnt
+        ON 
+            cnt.value = vv.value
+        ORDER BY
+            count DESC, vv.value;
+    <!-- 투표 종료 -->
+        UPDATE
+            vote 
+        SET
+            is_started = 0
+        WHERE
+            name = #{name};
+    </select>
+
+    <delete id="init">
+        UPDATE
+            vote 
+        SET
+            is_started = 0
+        WHERE
+            is_started = 1;
+    </delete>
+
+    <!-- -->
+    <insert id="log">
+        INSERT INTO vote_log
+        (
+            channel,
+            ts,
+            vote_id
+        )
+        VALUES
+        (
+            #{channel},
+            #{ts},
+            #{vote_id}
+        )
+    </insert>
+
+    <!-- 투표 기록 -->
+    <select id="log_get">
+        SELECT DISTINCT
+            v.name,
+            vv.value,
+            log.id,
+            log.channel,
+            log.ts,
+            IFNULL(cnt.count, 0) count
+        FROM
+            vote v
+        JOIN
+            vote_values vv 
+        ON 
+            v.id = vv.vote_id
+        JOIN
+            vote_log LOG 
+        ON
+            log.vote_id = v.id
+        LEFT JOIN
+        (
+            SELECT
+                log.id,
+                vv.value,
+                COUNT(users.user_id) count
+            FROM
+                vote v
+            LEFT JOIN
+                vote_values vv 
+            ON
+                vv.vote_id = v.id
+            LEFT JOIN
+                vote_users users 
+            ON
+                users.value_id = vv.id 
+                AND users.vote_id = v.id
+            LEFT JOIN 
+                vote_log LOG 
+            ON
+                users.log_id = log.id 
+                AND log.channel = v.channel
+            GROUP BY
+                log.id,
+                users.vote_id,
+                users.value_id
+            ORDER BY COUNT DESC, vv.value
+        ) cnt 
+        ON 
+            cnt.value = vv.value
+            AND cnt.id = LOG.id
+        ORDER BY 
+            log.channel DESC, 
+            log.ts DESC, 
+            vv.value ASC;
+    </select>
+</mapper>

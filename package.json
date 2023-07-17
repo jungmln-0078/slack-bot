@@ -1,0 +1,49 @@
+{
+  "name": "bot",
+  "version": "1.0.0",
+  "main": "bot.ts",
+  "dependencies": {
+    "@slack/events-api": "^3.0.0",
+    "@slack/logger": "^3.0.0",
+    "@slack/oauth": "^2.1.0",
+    "@slack/types": "^2.0.0",
+    "@slack/web-api": "^6.2.3",
+    "@types/body-parser": "^1.19.0",
+    "@types/jsonwebtoken": "^8.5.2",
+    "@types/mysql": "^2.15.18",
+    "@types/node": "^15.12.2",
+    "@types/slack-node": "^0.1.3",
+    "axios": "^0.21.1",
+    "body-parser": "^1.19.0",
+    "chalk": "^4.1.1",
+    "cheerio": "^1.0.0-rc.10",
+    "cluster": "^0.7.7",
+    "crypto": "^1.0.1",
+    "express": "^4.17.1",
+    "jsonwebtoken": "^8.5.1",
+    "moment": "^2.29.1",
+    "mybatis-mapper": "^0.6.5",
+    "mysql": "^2.18.1",
+    "node-slack": "^0.0.7",
+    "openweather-apis": "^4.4.1",
+    "os": "^0.1.1",
+    "passport": "^0.4.1",
+    "raw-body": "^2.4.0",
+    "request": "^2.88.2",
+    "ts-node": "^10.0.0",
+    "tsscmp": "^1.0.6",
+    "typescript": "^4.3.2",
+    "weather-js": "^2.0.0",
+    "weather.js": "^0.1.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.12",
+    "@types/tsscmp": "^1.0.0"
+  },
+  "scripts": {
+    "start": "ts-node bot.ts"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": ""
+}

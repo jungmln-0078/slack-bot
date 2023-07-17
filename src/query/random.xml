@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="random">
+    <!-- 뽑기 목록 -->
+    <select id="list">
+        SELECT
+            r.name,
+            rv.value
+        FROM
+            random r
+        LEFT JOIN
+            random_values rv
+        ON
+            r.id = rv.random_id
+    </select>
+
+    <!-- 뽑기 생성 -->
+    <insert id="new">
+        INSERT INTO
+            random
+        (
+            name
+        )
+        VALUES
+        (
+            #{name}
+        )
+    </insert>
+
+    <!-- 뽑기 실행 -->
+    <select id="get">
+        SELECT
+            r.name,
+            rv.value
+        FROM
+            random r
+        LEFT JOIN
+            random_values rv
+        ON
+            r.id = rv.random_id
+        WHERE
+            r.name = #{name}
+    </select>
+
+    <!-- 봇 투표 추가 -->
+    <insert id="insert">
+        INSERT INTO
+            random_values
+        (
+            random_id,
+            value
+        )
+        VALUES
+        (
+            #{random_id},
+            #{value}
+        )
+    </insert>
+
+    <!-- 봇 뽑기 삭제 -->
+    <delete id="delete_random">
+        DELETE FROM
+            random
+        WHERE
+            name = #{name}
+    </delete>
+
+    <!-- 봇 뽑기 삭제 (내용 삭제) -->
+    <delete id="delete_value">
+        DELETE FROM
+            random_values
+        WHERE
+            random_id = #{random_id}
+            AND value = #{value}
+    </delete>
+
+    <!-- 뽑기 id 검색 -->
+    <select id="getid">
+        SELECT
+            id
+        FROM
+            random
+        WHERE
+            name = #{name}
+    </select>
+</mapper>

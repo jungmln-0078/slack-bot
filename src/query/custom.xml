@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="custom">
+    <!-- 커스텀 명령어 목록 -->
+    <select id="list">
+        SELECT
+            `name`,
+            `desc`
+        FROM
+            `custom`
+    </select>
+    <!-- 커스텀 명령어 ID 받기 -->
+    <select id="getid">
+        SELECT
+            `id`
+        FROM
+            `custom`
+        WHERE
+            name = #{name}
+    </select>
+    <!-- 커스텀 명령어 생성 -->
+    <insert id="new">
+        INSERT INTO
+            `custom`
+        (
+            `name`
+            <if test="desc != ''">
+            ,`desc`
+            </if>
+        )
+        VALUES
+        (
+            #{name}
+            <if test="desc != ''">
+            ,#{desc}
+            </if>
+        )
+    </insert>
+    <!-- 커스텀 명령어 이벤트 생성-->
+    <insert id="event">
+        INSERT INTO
+            `custom_event`
+        (
+            `custom_id`,
+            `event`,
+            `behavior`,
+            `value`
+        )
+        VALUES
+        (
+            #{custom_id},
+            #{event},
+            #{behavior},
+            #{value}
+        )
+    </insert>
+    <!-- 커스텀 명령어 보기-->
+    <select id="get">
+        SELECT 
+            c.name,
+            c.desc,
+            e.index,
+            e.event,
+            e.behavior,
+            e.value
+        FROM 
+            custom c
+        JOIN 
+            custom_event e
+        ON 
+            c.id = e.custom_id
+        WHERE 
+            c.id = #{custom_id}
+        ORDER BY 
+           e.index;
+    </select>
+    <!-- 커스텀 명령어 삭제 -->
+    <delete id="delete">
+        DELETE FROM
+            `custom`
+        WHERE
+            `id` = #{custom_id}
+    </delete>
+    <!-- 커스텀 명령어 명령줄 삭제 -->
+    <delete id="delete_event">
+        DELETE FROM
+            `custom_event`
+        WHERE
+            `index` = #{index}
+    </delete>
+    <!-- 커스텀 명령어 실행용 목록 -->
+    <select id="get_list">
+        SELECT 
+            c.id,
+            c.name,
+            c.desc,
+            e.index,
+            e.event,
+            e.behavior,
+            e.value
+        FROM 
+            custom c
+        JOIN 
+            custom_event e
+        ON 
+            c.id = e.custom_id
+        ORDER BY 
+           c.id, e.index;
+    </select>
+</mapper>
